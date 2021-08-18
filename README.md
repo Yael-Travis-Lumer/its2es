@@ -31,6 +31,5 @@ fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=inte
 4. Plot predicted values and counterfactual values
 ```{r}
 p <- plot_its_lm(data=fit$data,intervention_start_ind,y_lab="Unemployment percent",response="percent", date_name= "dt")
-p
 ```
 
