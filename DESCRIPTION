@@ -14,7 +14,7 @@ Imports:
     tibble,
     ggplot2
 Authors@R: person("Yael", "Travis-Lumer", email = "yael.travis@gmail.com", role = c("aut", "cre"))
-Description: This package implements interuppted time series analysis for both continuous and count outcomes, and quantifies the associated effect size, as described in Effect Size Quantification for Interrupted Time Series Analysis: Implementation in R for Covid-19 Research.
+Description: This package implements interrupted time series analysis for both continuous and count outcomes, and quantifies the associated effect size, as described in Effect Size Quantification for Interrupted Time Series Analysis: Implementation in R for Covid-19 Research.
     The main functions fit an ITS regression model, and then use the fitted values and the model-based counterfactual values to quantify the effect size (Cohen's d for continuous outcomes and relative risk for count outcomes).
 License: GPL-3
 Encoding: UTF-8
