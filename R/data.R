@@ -11,7 +11,6 @@
 #'   \item{percent}{Monthly unemployment percent}
 #'   \item{dt}{The date}
 #'   \item{time}{A numeric vector counting the number of months (1 to 101)}
-#'   \item{indicator}{The Covid-19 binary indicator, equal to zero prior to March 2020, otherwise equal to 1}
 #' }
 #' @source \url{https://www.cbs.gov.il/en/publications/Pages/2021/Labour-Force-Survey-Monthly-May-2021.aspx}
 "unemployed"

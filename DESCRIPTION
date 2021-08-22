@@ -3,7 +3,7 @@ Type: Package
 Title: Interuppted Time Series Analysis and Corresponding Effect Sizes 
 Version: 0.1.0
 Depends:
-    R (>= 3.6)
+    R (>= 4.0.3)
 Imports:
     stats,
     forecast,

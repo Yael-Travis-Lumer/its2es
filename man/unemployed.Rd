@@ -14,7 +14,6 @@ A data frame with 101 rows and 8 variables:
   \item{percent}{Monthly unemployment percent}
   \item{dt}{The date}
   \item{time}{A numeric vector counting the number of months (1 to 101)}
-  \item{indicator}{The Covid-19 binary indicator, equal to zero prior to March 2020, otherwise equal to 1}
 }
 }
 \source{
