@@ -492,6 +492,7 @@ its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_mo
   model_copy <- model
   model_copy_null <- model
   for (i in 1:n_boot_samples){
+    set.seed(i)
     sampled_beta <- mvrnorm(n=1, mu=betas, Sigma=cov_mat )
     sampled_beta_null <- sampled_beta
     if (impact_model=="full"){
@@ -749,6 +750,7 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
   model_copy <- model
   model_copy_null <- model
   for (i in 1:n_boot_samples){
+    set.seed(i)
     sampled_beta <- mvrnorm(n=1, mu=betas, Sigma=cov_mat )
     sampled_beta_null <- sampled_beta
     if (impact_model=="full"){

@@ -10,7 +10,10 @@ Series Analysis: Implementation in R for Covid-19 Research. The main
 functions fit an ITS regression model, and then use the fitted values
 and the model-based counterfactual values to quantify the effect size
 (Cohen’s d for continuous outcomes and relative risk for count
-outcomes).
+outcomes). An example describing how to install and use this package is
+described below. A more detailed tutorial, including the entire data
+analysis described in the paper, is also available with this package
+(Rmd + PDF file).
 
 ## Installation
 
@@ -77,7 +80,7 @@ fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=inte
     ## Mean difference         2.5% CI        97.5% CI         P-value 
     ##        1.519055        1.248129        1.789981        0.000000 
     ## Cohen's d   2.5% CI  97.5% CI   P-value 
-    ##  4.724988  3.131863  8.262024  0.000000
+    ##  4.724988  3.130926  7.809674  0.000000
 
 4.  Plot predicted values and counterfactual values
 
