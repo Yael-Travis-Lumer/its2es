@@ -77,7 +77,7 @@ fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=inte
     ## Mean difference         2.5% CI        97.5% CI         P-value 
     ##        1.519055        1.248129        1.789981        0.000000 
     ## Cohen's d   2.5% CI  97.5% CI   P-value 
-    ##  4.724988  3.186181  8.043587  0.000000
+    ##  4.724988  3.131863  8.262024  0.000000
 
 4.  Plot predicted values and counterfactual values
 
