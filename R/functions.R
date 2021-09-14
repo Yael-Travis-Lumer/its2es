@@ -23,7 +23,7 @@
 #' @importFrom MASS mvrnorm
 #' @export
 its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE, impact_model="full", counterfactual="FALSE"){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   vars <- all.vars(form)
   response <- vars[1]
   covariates <- vars[-1]
@@ -186,7 +186,7 @@ its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervent
 #' @importFrom MASS mvrnorm
 #' @export
 its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE,freq, keep_significant_fourier=TRUE,impact_model="full", counterfactual="FALSE"){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   vars <- all.vars(form)
   response <- vars[1]
   covariates <- vars[-1]
@@ -378,7 +378,7 @@ its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, interven
 #' @importFrom MASS mvrnorm
 #' @export
 its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_model="full", counterfactual="FALSE"){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   if (!(is.data.frame(data) | is_tibble(data))){
     stop("Please make sure that data is either a data frame or a tibble")
   }
@@ -627,7 +627,7 @@ its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_mo
 #' @importFrom MASS mvrnorm
 #' @export
 its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, keep_significant_fourier=TRUE,impact_model="full", counterfactual="FALSE"){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   if (!(is.data.frame(data) | is_tibble(data))){
     stop("Please make sure that data is either a data frame or a tibble")
   }
@@ -705,13 +705,30 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
     form_update_sig <-update(form_update, as.formula(paste0("~ . +", paste(selected_fourier, collapse= "+"))))
     model <- lm(form_update_sig,data)
   }
-  b <- (n-t_star)/2
-  beta_intervention <- model$coefficients["indicator"]
-  beta_interaction <- model$coefficients["indicator:shifted_time"]
-  mean_diff <- beta_intervention+beta_interaction*b
   cov_mat <- vcov(model)
-  var_lin <- cov_mat["indicator","indicator"]+b^2*cov_mat["indicator:shifted_time","indicator:shifted_time"]+b*2*cov_mat["indicator","indicator:shifted_time"]
-  #lin_est <- beta_intervention+b*beta_interaction
+  #Mean difference
+  b <- (n-t_star)/2
+  if (impact_model=="full"){
+    beta_intervention <- model$coefficients["indicator"]
+    beta_interaction <- model$coefficients["indicator:shifted_time"]
+    mean_diff <- beta_intervention+beta_interaction*b
+    var_lin <- cov_mat["indicator","indicator"]+b^2*cov_mat["indicator:shifted_time","indicator:shifted_time"]+b*2*cov_mat["indicator","indicator:shifted_time"]
+  } else if (impact_model=="level"){
+    beta_intervention <- model$coefficients["indicator"]
+    mean_diff <- beta_intervention
+    var_lin <- cov_mat["indicator","indicator"]
+  } else if (impact_model=="slope"){
+    beta_interaction <- model$coefficients["indicator:shifted_time"]
+    mean_diff <- beta_interaction*b
+    var_lin <- b^2*cov_mat["indicator:shifted_time","indicator:shifted_time"]#+b*2*cov_mat["indicator","indicator:shifted_time"]
+  }
+  # b <- (n-t_star)/2
+  # beta_intervention <- model$coefficients["indicator"]
+  # beta_interaction <- model$coefficients["indicator:shifted_time"]
+  # mean_diff <- beta_intervention+beta_interaction*b
+  # cov_mat <- vcov(model)
+  # var_lin <- cov_mat["indicator","indicator"]+b^2*cov_mat["indicator:shifted_time","indicator:shifted_time"]+b*2*cov_mat["indicator","indicator:shifted_time"]
+  # #lin_est <- beta_intervention+b*beta_interaction
   CI <- c(mean_diff-1.96*sqrt(var_lin),mean_diff+1.96*sqrt(var_lin))
   TS <- mean_diff/sqrt(var_lin)
   p_value <- round(2*pnorm(abs(TS),lower.tail = FALSE),2)
@@ -861,7 +878,7 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
 #' @importFrom MASS mvrnorm
 #' @export
 its_lm <- function(data, form, time_name, intervention_start_ind,freq, seasonality= "none",impact_model="full", counterfactual=FALSE){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   if (seasonality=="none"){
     out <- its_lm_wo_seas(data, form, time_name, intervention_start_ind,impact_model, counterfactual)
   } else if (seasonality=="full"){
@@ -903,7 +920,7 @@ its_lm <- function(data, form, time_name, intervention_start_ind,freq, seasonali
 #' @importFrom MASS mvrnorm
 #' @export
 its_poisson <- function(data, form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE, freq, seasonality= "none",impact_model="full", counterfactual=FALSE){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   if (seasonality=="none"){
     out <- its_poisson_wo_seas(data, form, offset_name,time_name, intervention_start_ind,over_dispersion, impact_model, counterfactual)
   } else if (seasonality=="full"){
@@ -941,7 +958,7 @@ its_poisson <- function(data, form, offset_name=NULL,time_name, intervention_sta
 #' @importFrom ggplot2 ggplot aes geom_point ylab xlab geom_line draw_key_smooth geom_segment scale_color_manual scale_linetype_manual theme element_blank theme_bw
 #' @export
 plot_its_lm <- function(data,intervention_start_ind,y_lab,response,date_name){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   if (!(is.data.frame(data) | is_tibble(data))){
     stop("Please make sure that data is either a data frame or a tibble")
   }
@@ -1016,7 +1033,7 @@ plot_its_lm <- function(data,intervention_start_ind,y_lab,response,date_name){
 #' @importFrom ggplot2 ggplot aes geom_point ylab xlab geom_line draw_key_smooth geom_segment scale_color_manual scale_linetype_manual theme element_blank theme_bw
 #' @export
 plot_its_poisson <- function(data,intervention_start_ind,y_lab,response, offset_name = NULL, date_name){
-  pred <- predC <- NULL
+  pred <- predC <- indicator <- NULL
   if (!(is.data.frame(data) | is_tibble(data))){
     stop("Please make sure that data is either a data frame or a tibble")
   }
