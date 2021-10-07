@@ -1,7 +1,7 @@
 ---
 title: "Tutorial for the `its2es' R package"
 subtitle: "Based on the paper Effect Size Quantification for Interrupted Time Series Analysis: Implementation in R for Covid-19 Research"
-output: html_document
+output: pdf_document
 ---
 
 # Load library and data
@@ -25,7 +25,8 @@ intervention_start_ind <- which(data$Year==2020 & data$Month>2| data$Year==2021)
 Next, we need to call the its_lm() function to fit the ITS regression model and to quantify the effect size. Here we use a frequency of 12, corresponding to monthly data, no seasonal adjustments, and a full impact model including both a level change and a slope change following the intervention. Additionally, we set the counterfactual argument to TRUE as we are interested in plotting both the fitted values, and the model-based counterfactual values. For illustration purposes, we print the entire model summary by setting the print_summary argument to TRUE. For conciseness, the entire model summary will not be printed hereafter in this tutorial, but only the effect size, together with its corresponding 95% CI and P-value.
 ```{r}
 fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=intervention_start_ind,
-              freq=12,seasonality= "none", impact_model = "full",counterfactual = TRUE, print_summary=TRUE)
+              freq=12,seasonality= "none", impact_model = "full",counterfactual = TRUE,
+              print_summary=TRUE)
 ```
 
 ## Plot predicted values (fitted values and counterfactual values)
