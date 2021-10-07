@@ -26,11 +26,11 @@ data <- Israel_mortality
 2. Define formula and intervention start index for the Covid-19 period
 ```{r}
 form <- as.formula("percent ~ time")
-intervention_start_ind <- which(data$year==2020 & data$month>2| data$year==2021)[1]
+intervention_start_ind <- which(data$Year==2020 & data$Month>2| data$Year==2021)[1]
 ```
-3. Fit a linear regression ITS model
+3. Fit a linear regression ITS model to the mortality percent
 ```{r}
-fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=intervention_start_ind, freq=12,seasonality= "none", impact_model = "full",counterfactual = TRUE)
+fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=intervention_start_ind, freq=12,seasonality= "full", impact_model = "full",counterfactual = TRUE)
 ```
 4. Plot predicted values and counterfactual values
 ```{r}
