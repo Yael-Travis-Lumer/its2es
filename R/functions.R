@@ -10,6 +10,7 @@
 #' @param over_dispersion Logical - indicating whether a quasi-Poisson model should be used to account for over dispersion (TRUE), or not (FLASE). Default value is FALSE.
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -22,7 +23,7 @@
 #' @importFrom forecast fourier
 #' @importFrom MASS mvrnorm
 #' @export
-its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE, impact_model="full", counterfactual="FALSE"){
+its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE, impact_model="full", counterfactual=FALSE, print_summary=FALSE){
   pred <- predC <- indicator <- NULL
   vars <- all.vars(form)
   response <- vars[1]
@@ -130,7 +131,9 @@ its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervent
   ret_vec <-c(RR,CI_RR,p_value)
   names(ret_vec) <- c("RR", "2.5% CI", "97.5% CI","P-value")
   s <- summary(model)
-  print(s)
+  if (isTRUE(print_summary)){
+    print(s)
+  }
   print(ret_vec)
   s[["RR"]] <- ret_vec #or model[["RR"]] <- ret_vec and then return(model)
 
@@ -173,6 +176,7 @@ its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervent
 #' @param keep_significant_fourier Logical - indicating whether only the significant Fourier terms should be considered. Default is TRUE and then the model is fitted twice; once to obtain the significant Fourier terms, and second time keeping only the significant Fourier terms. If FALSE, then all the Fourier terms are used.
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -185,7 +189,7 @@ its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervent
 #' @importFrom forecast fourier
 #' @importFrom MASS mvrnorm
 #' @export
-its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE,freq, keep_significant_fourier=TRUE,impact_model="full", counterfactual="FALSE"){
+its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE,freq, keep_significant_fourier=TRUE,impact_model="full", counterfactual=FALSE, print_summary=FALSE){
   pred <- predC <- indicator <- NULL
   vars <- all.vars(form)
   response <- vars[1]
@@ -325,7 +329,9 @@ its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, interven
   ret_vec <-c(RR,CI_RR,p_value)
   names(ret_vec) <- c("RR", "2.5% CI", "97.5% CI","P-value")
   s <- summary(model)
-  print(s)
+  if (isTRUE(print_summary)){
+    print(s)
+  }
   print(ret_vec)
   s[["RR"]] <- ret_vec #or model[["RR"]] <- ret_vec and then return(model)
 
@@ -365,6 +371,7 @@ its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, interven
 #' @param intervention_start_ind Numeric - a number between 1 and nrow(data)-1 stating the time point of the start of the intervention
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted linear regression model, the summary of the model (including the mean difference and Cohen's d), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -377,7 +384,7 @@ its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, interven
 #' @importFrom forecast fourier
 #' @importFrom MASS mvrnorm
 #' @export
-its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_model="full", counterfactual="FALSE"){
+its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_model="full", counterfactual=FALSE, print_summary=FALSE){
   pred <- predC <- indicator <- NULL
   if (!(is.data.frame(data) | is_tibble(data))){
     stop("Please make sure that data is either a data frame or a tibble")
@@ -569,8 +576,10 @@ its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_mo
   # p_value_d <- mean(abs(cohen_d_vector)>abs(cohen_d))
   ret_vec2 <-c(cohen_d, CI_low, CI_up ,p_value_d)
   names(ret_vec2) <- c("Cohen's d", "2.5% CI", "97.5% CI","P-value")
-  print(summar)
-  print(ret_vec)
+  if (isTRUE(print_summary)){
+    print(summar)
+    print(ret_vec)
+  }
   print(ret_vec2)
   summar[["Cohen's d"]] <- ret_vec2
 
@@ -614,6 +623,7 @@ its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_mo
 #' @param keep_significant_fourier Logical - indicating whether only the significant Fourier terms should be considered. Default is TRUE and then the model is fitted twice; once to obtain the significant Fourier terms, and second time keeping only the significant Fourier terms. If FALSE, then all the Fourier terms are used.
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted linear regression model, the summary of the model (including the mean difference and Cohen's d), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -626,7 +636,7 @@ its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_mo
 #' @importFrom forecast fourier
 #' @importFrom MASS mvrnorm
 #' @export
-its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, keep_significant_fourier=TRUE,impact_model="full", counterfactual="FALSE"){
+its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, keep_significant_fourier=TRUE,impact_model="full", counterfactual=FALSE, print_summary=FALSE){
   pred <- predC <- indicator <- NULL
   if (!(is.data.frame(data) | is_tibble(data))){
     stop("Please make sure that data is either a data frame or a tibble")
@@ -814,8 +824,10 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
 
   ret_vec2 <-c(cohen_d, CI_low, CI_up ,p_value_d)
   names(ret_vec2) <- c("Cohen's d", "2.5% CI", "97.5% CI","P-value")
-  print(summar)
-  print(ret_vec)
+  if (isTRUE(print_summary)){
+    print(summar)
+    print(ret_vec)
+  }
   print(ret_vec2)
   summar[["Cohen's d"]] <- ret_vec2
 
@@ -865,6 +877,7 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
 #' @param seasonality A string specifying whether seasonality should be considered. Possible options include "none" corresponding to no seasonal adjustment, "full" corresponding to using freq-1 Fourier terms to model the seasonal component, and "significant" indicating whether only the significant Fourier terms should be considered in the seasonal adjustment. Default value is "none".
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted linear regression model, the summary of the model (including the mean difference and Cohen's d), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -877,16 +890,16 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
 #' @importFrom forecast fourier
 #' @importFrom MASS mvrnorm
 #' @export
-its_lm <- function(data, form, time_name, intervention_start_ind,freq, seasonality= "none",impact_model="full", counterfactual=FALSE){
+its_lm <- function(data, form, time_name, intervention_start_ind,freq, seasonality= "none",impact_model="full", counterfactual=FALSE,print_summary=FALSE){
   pred <- predC <- indicator <- NULL
   if (seasonality=="none"){
-    out <- its_lm_wo_seas(data, form, time_name, intervention_start_ind,impact_model, counterfactual)
+    out <- its_lm_wo_seas(data, form, time_name, intervention_start_ind,impact_model, counterfactual, print_summary)
   } else if (seasonality=="full"){
     keep_significant_fourier=FALSE
-    out <- its_lm_fourier(data, form, time_name, intervention_start_ind,freq,keep_significant_fourier, impact_model, counterfactual)
+    out <- its_lm_fourier(data, form, time_name, intervention_start_ind,freq,keep_significant_fourier, impact_model, counterfactual, print_summary)
   } else if (seasonality=="significant"){
     keep_significant_fourier=TRUE
-    out <- its_lm_fourier(data, form, time_name, intervention_start_ind,freq,keep_significant_fourier, impact_model, counterfactual)
+    out <- its_lm_fourier(data, form, time_name, intervention_start_ind,freq,keep_significant_fourier, impact_model, counterfactual, print_summary)
   } else {
     stop("Please enter a valid seasonality argument. Possible seasonality arguments are \"none\", \"full\", and \"significant\".")
   }
@@ -907,6 +920,7 @@ its_lm <- function(data, form, time_name, intervention_start_ind,freq, seasonali
 #' @param seasonality A string specifying whether seasonality should be considered. Possible options include "none" corresponding to no seasonal adjustment, "full" corresponding to using freq-1 Fourier terms to model the seasonal component, and "significant" indicating whether only the significant Fourier terms should be considered in the seasonal adjustment. Default value is "none".
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -919,16 +933,16 @@ its_lm <- function(data, form, time_name, intervention_start_ind,freq, seasonali
 #' @importFrom forecast fourier
 #' @importFrom MASS mvrnorm
 #' @export
-its_poisson <- function(data, form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE, freq, seasonality= "none",impact_model="full", counterfactual=FALSE){
+its_poisson <- function(data, form, offset_name=NULL,time_name, intervention_start_ind,over_dispersion=FALSE, freq, seasonality= "none",impact_model="full", counterfactual=FALSE,print_summary=FALSE){
   pred <- predC <- indicator <- NULL
   if (seasonality=="none"){
-    out <- its_poisson_wo_seas(data, form, offset_name,time_name, intervention_start_ind,over_dispersion, impact_model, counterfactual)
+    out <- its_poisson_wo_seas(data, form, offset_name,time_name, intervention_start_ind,over_dispersion, impact_model, counterfactual, print_summary)
   } else if (seasonality=="full"){
     keep_significant_fourier=FALSE
-    out <- its_poisson_fourier(data, form, offset_name,time_name, intervention_start_ind,over_dispersion, freq, keep_significant_fourier,impact_model, counterfactual)
+    out <- its_poisson_fourier(data, form, offset_name,time_name, intervention_start_ind,over_dispersion, freq, keep_significant_fourier,impact_model, counterfactual, print_summary)
   } else if (seasonality=="significant"){
     keep_significant_fourier=TRUE
-    out <- its_poisson_fourier(data, form, offset_name,time_name, intervention_start_ind,over_dispersion, freq, keep_significant_fourier,impact_model, counterfactual)
+    out <- its_poisson_fourier(data, form, offset_name,time_name, intervention_start_ind,over_dispersion, freq, keep_significant_fourier,impact_model, counterfactual, print_summary)
   } else {
     stop("Please enter a valid seasonality argument. Possible seasonality arguments are \"none\", \"full\", and \"significant\".")
   }
