@@ -17,10 +17,10 @@ install_github("Yael-Travis-Lumer/its2es")
 ```
 
 ## Example
-1. Load library and unemployment data (discussed in paper)
+1. Load library and Israel mortality data (discussed in paper)
 ```{r,warning = FALSE, message = FALSE}
 library(its2es)
-data <- unemployed
+data <- Israel_mortality
 ```
 
 2. Define formula and intervention start index for the Covid-19 period
@@ -34,7 +34,7 @@ fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=inte
 ```
 4. Plot predicted values and counterfactual values
 ```{r}
-p <- plot_its_lm(data=fit$data,intervention_start_ind,y_lab="Unemployment percent",response="percent", date_name= "dt")
+p <- plot_its_lm(data=fit$data,intervention_start_ind=intervention_start_ind, y_lab="Mortality percent", response="percent", date_name= "Date")
 p
 ```
 
