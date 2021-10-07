@@ -11,9 +11,9 @@ functions fit an ITS regression model, and then use the fitted values
 and the model-based counterfactual values to quantify the effect size
 (Cohen’s d for continuous outcomes and relative risk for count
 outcomes). An example describing how to install and use this package is
-described below. A more detailed tutorial, including the entire data
-analysis described in the paper, is also available with this package
-(Rmd + PDF file).
+described below. A more detailed tutorial, including the data analysis
+described in the paper, is also available with this package (Rmd + html
+file).
 
 ## Installation
 
