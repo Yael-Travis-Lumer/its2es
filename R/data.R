@@ -20,29 +20,17 @@
 #'
 #' A dataset containing the monthly number of deaths, the estimated monthly population size, and the monthly mortality percent, for all the population and for groups of different age and sex.
 #'
-#' @format A data frame with 245 rows and 21 variables:
+#' @format A data frame with 245 rows and 7 variables:
 #' \describe{
 #'   \item{Month}{The month number, between 1 to 12}
 #'   \item{Year}{The year, between 2001 to 2021}
 #'   \item{monthly_total}{Total monthly count of deaths for the entire population}
-#'   \item{total_males}{Total monthly count of deaths among males}
-#'   \item{total_females}{Total monthly count of deaths among females}
 #'   \item{Date}{The date}
 #'   \item{monthly_est}{Monthly estimated population size}
-#'   \item{males_monthly_est}{Monthly estimated male population size}
-#'   \item{females_monthly_est}{Monthly estimated female population size}
-#'   \item{males_monthly_est_over60}{Monthly estimated population size for males over 60}
-#'   \item{females_monthly_est_over60}{Monthly estimated population size for females over 60}
-#'   \item{monthly_est0_19}{Monthly estimated population size for ages 0-19 (both sexes)}
-#'   \item{monthly_est60}{Monthly estimated population size for persons aged over 60 (both sexes)}
-#'   \item{monthly_est20_59}{Monthly estimated population size for ages 20-59 (both sexes)}
-#'   \item{total_males_over60}{Total monthly count of deaths among males over 60}
-#'   \item{total_females_ver60}{Total monthly count of deaths among females over 60}
-#'   \item{total_60}{Total monthly count of deaths among persons over 60 (for both sexes)}
-#'   \item{total_0_19}{Total monthly count of deaths for ages 0-19 (both sexes)}
-#'   \item{total_20_59}{Total monthly count of deaths for ages 20-59 (both sexes)}
 #'   \item{percent}{Monthly mortality percent for the entire population}
 #'   \item{time}{A numeric vector counting the number of months (1 to 245)}
 #' }
 #' @source \url{https://www.cbs.gov.il/he/Pages/search/TableMaps.aspx?CbsSubject=%D7%AA%D7%9E%D7%95%D7%AA%D7%94%20%D7%95%D7%AA%D7%95%D7%97%D7%9C%D7%AA%20%D7%97%D7%99%D7%99%D7%9D}
 "Israel_mortality"
+
+
