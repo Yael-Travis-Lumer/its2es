@@ -5,11 +5,11 @@ README
 
 This package implements interrupted time series analysis for both
 continuous and count outcomes, and quantifies the associated effect
-size, as described in Effect Size Quantification for Interrupted Time
-Series Analysis: Implementation in R for Covid-19 Research. The main
-functions fit an ITS regression model, and then use the fitted values
-and the model-based counterfactual values to quantify the effect size
-(Cohen’s d for continuous outcomes and relative risk for count
+size, as described in Effect size quantification for interrupted time
+series analysis: Implementation in R and analysis for Covid-19 research.
+The main functions fit an ITS regression model, and then use the fitted
+values and the model-based counterfactual values to quantify the effect
+size (Cohen’s d for continuous outcomes and relative risk for count
 outcomes). An example describing how to install and use this package is
 described below. A more detailed tutorial, including the data analysis
 described in the paper, is also available with this package (Rmd + pdf
@@ -36,7 +36,8 @@ install_github("Yael-Travis-Lumer/its2es")
 
 ## Example
 
-1.  Load library and Israel mortality data (discussed in paper)
+1.  Load library and Israel all-cause mortality data (discussed in
+    paper)
 
 ``` r
 library(its2es)
@@ -62,7 +63,7 @@ fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=inte
 4.  Plot predicted values and counterfactual values
 
 ``` r
-p <- plot_its_lm(data=fit$data,intervention_start_ind=intervention_start_ind, y_lab="Mortality percent", response="percent", date_name= "Date")
+p <- plot_its_lm(data=fit$data,intervention_start_ind=intervention_start_ind, y_lab="All-cause mortality percent", response="percent", date_name= "Date")
 p
 ```
 

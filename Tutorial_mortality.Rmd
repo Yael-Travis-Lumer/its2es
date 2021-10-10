@@ -1,6 +1,6 @@
 ---
 title: "Tutorial for the `its2es' R package"
-subtitle: "Based on the paper Effect size quantification for interrupted time series analysis: Implementation in R and quantifying the relative risk of mortality during Covid-19 in a national population-based cohort"
+subtitle: "Based on the paper Effect size quantification for interrupted time series analysis: Implementation in R and analysis for Covid-19 research"
 output: pdf_document
 ---
 
