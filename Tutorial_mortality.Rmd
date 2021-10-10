@@ -1,18 +1,18 @@
 ---
 title: "Tutorial for the `its2es' R package"
-subtitle: "Based on the paper Effect Size Quantification for Interrupted Time Series Analysis: Implementation in R for Covid-19 Research"
+subtitle: "Based on the paper Effect size quantification for interrupted time series analysis: Implementation in R and quantifying the relative risk of mortality during Covid-19 in a national population-based cohort"
 output: pdf_document
 ---
 
 # Load library and data
-We start by loading the `its2es' package and the Israeli mortality data. This is the same data-set analyzed in the paper.
+First we load the `its2es' package which contains the Israeli all-cause mortality data. This is the same data-set analyzed in the current study.
 ```{r message=FALSE}
 library(its2es)
 data <- Israel_mortality
 ```
 
 # 1. Fit an ITS linear regression model to continuous outcomes
-First, we show how to fit an ITS linear regression model to the continuous outcome mortality percent. For illustration purposes only and to keep things simple, our first model will not include any seasonal adjustment. This is inadvisable as the mortality percent has a clear seasonal pattern that may greatly influence the effect size and our confidence around it. A better linear regression model, which includes also a seasonal adjustment, will be presented in Section 2.
+For illustration purposes only we show how to fit an ITS linear regression model to the continuous outcome mortality percent. For this example only and for simplicity, our first model excludes seasonal adjustment. In reality this is inadvisable as the mortality percent has a clear seasonal pattern that may greatly influence the effect size and our confidence around it. A better linear regression model, which also includes a seasonal adjustment, will be presented in Section 2.
 
 ## Define formula and intervention start index for the Covid-19 period
 We need to define both a formula object, and the intervention start index. The minimal formula must include the response on the left hand side of the ~ operator, and the time covariate on the right. Any additional covariates can also be passed to the right hand side of the formula, separated by + operators. 
@@ -22,23 +22,22 @@ intervention_start_ind <- which(data$Year==2020 & data$Month>2| data$Year==2021)
 ```
 
 ## Fit an ITS linear regression model to continuous outcomes
-Next, we need to call the its_lm() function to fit the ITS regression model and to quantify the effect size. Here we use a frequency of 12, corresponding to monthly data, no seasonal adjustments, and a full impact model including both a level change and a slope change following the intervention. Additionally, we set the counterfactual argument to TRUE as we are interested in plotting both the fitted values, and the model-based counterfactual values. For illustration purposes, we print the entire model summary by setting the print_summary argument to TRUE. For conciseness, the entire model summary will not be printed hereafter in this tutorial, but only the effect size, together with its corresponding 95% CI and P-value.
+Next, we need to call the its_lm() function to fit the ITS regression model and to quantify the effect size. Here we use a frequency of 12, corresponding to monthly data, no seasonal adjustments, and a full impact model including both a level change and a slope change following the intervention. Additionally, we set the counterfactual argument to TRUE as we are interested in plotting both the fitted values, and the model-based counterfactual values. For illustration purposes, we print the full model summary by setting the print_summary argument to TRUE. For conciseness, the complete model summary will not be printed hereafter in this tutorial, but only the effect size, together with its corresponding 95% CI and P-value.
 ```{r}
 fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=intervention_start_ind,
-              freq=12,seasonality= "none", impact_model = "full",counterfactual = TRUE,
-              print_summary=TRUE)
+              freq=12,seasonality= "none", impact_model = "full",counterfactual = TRUE,print_summary=TRUE)
 ```
 
 ## Plot predicted values (fitted values and counterfactual values)
 We use the function plot_its_lm() to plot the predicted values (fitted values and counterfactual values), together with a scatter plot of the original outcome. For the first argument, we use the updated data that includes both the fitted values and the model-based counterfactual values. We also must supply the intervention start index, the ylabel for the figure, the column name of the continuous outcome, and the column name of the date column.
 ```{r, fig.dim = c(8, 4)}
 p <- plot_its_lm(data=fit$data,intervention_start_ind=intervention_start_ind,
-                 y_lab="Mortality percent", response="percent", date_name= "Date")
+                 y_lab="All-cause mortality percent", response="percent", date_name= "Date")
 p
 ```
 
 # 2. Fit an ITS linear regression model with seasonal adjustments to continuous outcomes
-Second, we show how to fit an ITS linear regression model with seasonal adjustments. We use the same formula and intervention start index as before. The only difference is that this time we call the its_lm() function with seasonality= "full".
+Second, we show how to fit an ITS linear regression model with seasonal adjustments. We use the same formula and intervention start index as before, except that we call the its_lm() function with seasonality= "full".
 
 ```{r}
 fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=intervention_start_ind,
@@ -48,7 +47,7 @@ fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=inte
 ## Plot predicted values (fitted values and counterfactual values)
 ```{r, fig.dim = c(8, 4)}
 p <- plot_its_lm(data=fit$data,intervention_start_ind=intervention_start_ind,
-                 y_lab="Mortality percent", response="percent", date_name= "Date")
+                 y_lab="All-cause mortality percent", response="percent", date_name= "Date")
 p
 ```
 
@@ -72,15 +71,15 @@ fit <- its_poisson(data=data,form=form, offset_name = "monthly_est", time_name =
 ```
 
 ## Plot predicted values (fitted values and counterfactual values)
-We use the function plot_its_poisson() to plot the predicted values (fitted values and counterfactual values), together with a scatter plot of the outcome. For the first argument, we use the updated data that includes both the fitted values and the model-based counterfactual values. We also must supply the intervention start index, the ylabel for the figure, the column name of the count outcome, and the column name of the date column.
-Note that the additional argument offset_name, which is specific to Poisson regression, can either be set to NULL, in which case the predictions and the original outcomes are plotted on their original count scale, or set to the column name of the offset term (if exists), in which case the predictions and the outcome will be divided by the offset and multiplied by 100.
+We use the function plot_its_poisson() to plot the predicted values (fitted values and counterfactual values), together with a scatter plot of the outcome. For the first argument, we use the updated data that includes both the fitted values and the model-based counterfactual values. Additionally, the function requires the intervention start index, the ylabel for the figure, the column name of the count outcome, and the column name of the date column.
+Note that the additional argument offset_name, which is specific to Poisson regression, can either be set to NULL, in which case the predictions and the observed outcomes are plotted on their original count scale, or set to the column name of the offset term (if it exists), in which case the predictions and the outcome will be divided by the offset and multiplied by 100.
 ```{r, fig.dim = c(8, 4)}
 p <- plot_its_poisson(data=fit$data,intervention_start_ind=intervention_start_ind,
-                      y_lab="Mortality percent",response="monthly_total", offset_name = "monthly_est",
+                      y_lab="All-cause mortality percent",response="monthly_total", offset_name = "monthly_est",
                       date_name= "Date")
 p
 p2 <- plot_its_poisson(data=fit$data,intervention_start_ind=intervention_start_ind,
-                       y_lab="Mortality count",response="monthly_total", offset_name = NULL,
+                       y_lab="All-cause mortality count",response="monthly_total", offset_name = NULL,
                        date_name="Date")
 p2
 ```
