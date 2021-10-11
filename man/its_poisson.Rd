@@ -39,7 +39,7 @@ its_poisson(
 
 \item{counterfactual}{Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.}
 
-\item{print_summary}{Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.}
+\item{print_summary}{Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.}
 }
 \value{
 The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.

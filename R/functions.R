@@ -10,7 +10,7 @@
 #' @param over_dispersion Logical - indicating whether a quasi-Poisson model should be used to account for over dispersion (TRUE), or not (FLASE). Default value is FALSE.
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
-#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -176,7 +176,7 @@ its_poisson_wo_seas <- function(data,form, offset_name=NULL,time_name, intervent
 #' @param keep_significant_fourier Logical - indicating whether only the significant Fourier terms should be considered. Default is TRUE and then the model is fitted twice; once to obtain the significant Fourier terms, and second time keeping only the significant Fourier terms. If FALSE, then all the Fourier terms are used.
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
-#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -371,7 +371,7 @@ its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, interven
 #' @param intervention_start_ind Numeric - a number between 1 and nrow(data)-1 stating the time point of the start of the intervention
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
-#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted linear regression model, the summary of the model (including the mean difference and Cohen's d), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -623,7 +623,7 @@ its_lm_wo_seas <- function(data,form,time_name, intervention_start_ind,impact_mo
 #' @param keep_significant_fourier Logical - indicating whether only the significant Fourier terms should be considered. Default is TRUE and then the model is fitted twice; once to obtain the significant Fourier terms, and second time keeping only the significant Fourier terms. If FALSE, then all the Fourier terms are used.
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
-#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted linear regression model, the summary of the model (including the mean difference and Cohen's d), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -877,7 +877,7 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
 #' @param seasonality A string specifying whether seasonality should be considered. Possible options include "none" corresponding to no seasonal adjustment, "full" corresponding to using freq-1 Fourier terms to model the seasonal component, and "significant" indicating whether only the significant Fourier terms should be considered in the seasonal adjustment. Default value is "none".
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
-#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted linear regression model, the summary of the model (including the mean difference and Cohen's d), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
@@ -920,7 +920,7 @@ its_lm <- function(data, form, time_name, intervention_start_ind,freq, seasonali
 #' @param seasonality A string specifying whether seasonality should be considered. Possible options include "none" corresponding to no seasonal adjustment, "full" corresponding to using freq-1 Fourier terms to model the seasonal component, and "significant" indicating whether only the significant Fourier terms should be considered in the seasonal adjustment. Default value is "none".
 #' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
 #' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
-#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
 #' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
 #' @examples
 #' data <- unemployed
