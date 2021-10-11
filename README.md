@@ -54,7 +54,7 @@ intervention_start_ind <- which(data$Year==2020 & data$Month>2| data$Year==2021)
 3.  Fit a linear regression ITS model to the mortality percent
 
 ``` r
-fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=intervention_start_ind, freq=12,seasonality= "full", impact_model = "full",counterfactual = TRUE)
+fit <- its_lm(data=data,form=form,time_name = "time",intervention_start_ind=intervention_start_ind, freq=12,seasonality= "full", impact_model = "full",counterfactual = TRUE, print_summary = FALSE)
 ```
 
     ## Cohen's d   2.5% CI  97.5% CI   P-value 
