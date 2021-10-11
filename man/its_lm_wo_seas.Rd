@@ -11,7 +11,8 @@ its_lm_wo_seas(
   time_name,
   intervention_start_ind,
   impact_model = "full",
-  counterfactual = "FALSE"
+  counterfactual = FALSE,
+  print_summary = FALSE
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ its_lm_wo_seas(
 \item{impact_model}{A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".}
 
 \item{counterfactual}{Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.}
+
+\item{print_summary}{Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95% CI and P-value, are printed.}
 }
 \value{
 The function returns a list with three elements: the fitted linear regression model, the summary of the model (including the mean difference and Cohen's d), and the original data together with the model predictions.
