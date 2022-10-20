@@ -48,7 +48,7 @@ data <- Israel_mortality
 
 ``` r
 form <- as.formula("percent ~ time")
-intervention_start_ind <- which(data$Year==2020 & data$Month>2| data$Year==2021)[1]
+intervention_start_ind <- which(data$Year==2020 & data$Month==3)
 ```
 
 3.  Fit a linear regression ITS model to the mortality percent
