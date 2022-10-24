@@ -30,7 +30,19 @@
 #'   \item{percent}{Monthly mortality percent for the entire population}
 #'   \item{time}{A numeric vector counting the number of months (1 to 245)}
 #' }
-#' @source \url{https://www.cbs.gov.il/he/Pages/search/TableMaps.aspx?CbsSubject=%D7%AA%D7%9E%D7%95%D7%AA%D7%94%20%D7%95%D7%AA%D7%95%D7%97%D7%9C%D7%AA%20%D7%97%D7%99%D7%99%D7%9D}
+#' @source \url{https://www.cbs.gov.il}
 "Israel_mortality"
 
-
+#' Simulated monthly count data with excess zeros between January 2001 and May 2021
+#'
+#' A dataset containing the simulated monthly zero-inflated count.
+#'
+#' @format A data frame with 245 rows and 5 variables:
+#' \describe{
+#'   \item{Month}{The month number, between 1 to 12}
+#'   \item{Year}{The year, between 2001 to 2021}
+#'   \item{monthly_total}{Total simulated zero-inflated monthly count}
+#'   \item{Date}{The date}
+#'   \item{time}{A numeric vector counting the number of months (1 to 245)}
+#' }
+"zero_inflated_sim_data"

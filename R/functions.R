@@ -269,10 +269,9 @@ its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, interven
     stop("Please make sure that the freq is a value greater than 1 and less or equal to nrow(data)")
   }
   t_star <- which(data$indicator==1, arr.ind = TRUE)[1]
-  #estimate Fourier terms based only on pre-intervention data
-  ts_wo_intervention <- ts(data[[response]][1:(t_star-1)],frequency = freq)
-  fourier_mat <- fourier(ts_wo_intervention,K=freq/2)
-  fourier_mat <- rbind(fourier_mat,fourier_mat[(t_star%%freq):(n-t_star+t_star%%freq),])
+
+  ts_outcome <- ts(data[[response]],frequency = freq)
+  fourier_mat <- fourier(ts_outcome,K=freq/2)
   colnames(fourier_mat) <- gsub("-",".", colnames(fourier_mat))
   fourier_df <- data.frame(fourier_mat)
   colnames(fourier_df) <- colnames(fourier_mat)
@@ -359,6 +358,319 @@ its_poisson_fourier <- function(data, form, offset_name=NULL,time_name, interven
   #   scale_linetype_manual("",values = c("Counterfactual"=2,"Fitted values"=1),breaks = Group) +
   #   theme(legend.key=element_blank())
   # p2
+  return(list(model=model, model_summary=s, data=data))
+}
+
+#' ITS analysis for zero inflated count outcomes with no seasonality adjustment
+#'
+#' \code{its_zero_inflated} fits a zero-inflated Poisson regression model to an ITS, and returns the model, the summary of the model (including the relative risk), and the original data together with the model predictions.
+#'
+#' @param data The data frame corresponding to the supplied formula, existing of at least 2 variables: (1) the count outcome, and (2) a vector of time points
+#' @param form A formula with the response on the left, followed by the ~ operator, and the covariates on the right, separated by + operators. The formula should not contain an offest term.
+#' @param offset_name either a string indicating the name of the offset column in the data, or NULL. Default value is NULL
+#' @param time_name A string giving the name of the time variable. The time variable may or may not be supplied as a covariate in the formula
+#' @param intervention_start_ind Numeric - a number between 1 and nrow(data)-1 stating the time point of the start of the intervention
+#' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
+#' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
+#' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
+#' @examples
+#' data <- zero_inflated_sim_data
+#' form <- as.formula("monthly_total ~ time")
+#' intervention_start_ind <- which(data$Year==2020 & data$Month==3)
+#' fit <- its_zero_inflated(data=data,form=form, time_name = "time",intervention_start_ind=intervention_start_ind, impact_model = "full",counterfactual = TRUE)
+#' @importFrom tibble is_tibble as_tibble
+#' @importFrom rlang is_formula sym
+#' @importFrom stats as.formula glm lm pnorm poisson quasipoisson ts vcov update predict var na.omit quantile
+#' @importFrom pscl zeroinfl
+#' @importFrom MASS mvrnorm
+#' @export
+its_zero_inflated <- function(data,form, offset_name=NULL,time_name, intervention_start_ind, impact_model="full", counterfactual=FALSE, print_summary=FALSE){
+  pred <- predC <- indicator <- NULL
+  vars <- all.vars(form)
+  response <- vars[1]
+  covariates <- vars[-1]
+  if (!(is.data.frame(data) | is_tibble(data))){
+    stop("Please make sure that data is either a data frame or a tibble")
+  }
+  if(!(is_formula(form))){
+    stop("Please make sure that form is a formula object")
+  }
+  if (!(time_name %in% colnames(data))){
+    stop("Please make sure that time_name belongs to colnames(data)")
+  }
+  if(!all(data[[time_name]]==(1:nrow(data)))){
+    data[[time_name]]=1:nrow(data)
+    print("time_name column was overwritten with the values 1:nrow(data)")
+  }
+  if (!(is.null(offset_name))){
+    if (!(offset_name %in% colnames(data))){
+      stop("Please make sure that offset_name belongs to colnames(data)")
+    }
+    if (offset_name %in% covariates | paste0("offset(log(",offset_name,"))") %in% covariates | paste0("offset(",offset_name,")") %in% covariates | paste0("log(",offset_name,")") %in% covariates){
+      stop("The offset term should not be included in the formula. Please supply a formula without the offset, and add the name of the offset column using the argument offset_name.")
+    }
+  }
+  if (!(impact_model %in% c("full","level","slope"))){
+    stop("Please enter a valid impact_model name. Possible impact models are \"full\", \"level\", and \"slope\".")
+  }
+  if (!(response %in% colnames(data))){
+    stop("Please make sure that the response variable on the left hand side of the formula object belongs to colnames(data)")
+  }
+  if (!all(covariates %in% colnames(data))){
+    stop("Please make sure that the covariates on the right hand side of the formula object belong to colnames(data)")
+  }
+  n <- nrow(data)
+  if (!(intervention_start_ind>1 & intervention_start_ind<=n)){
+    stop("Please make sure that intervention_start_ind is a value greater than 1 and less or equal to nrow(data). intervention_start_ind is the index ")
+  }
+  data$indicator <- 0
+  data$indicator[intervention_start_ind:n] <- 1
+  data$shifted_time <- data[[time_name]]-intervention_start_ind
+  # update formula
+  if (impact_model=="full"){
+    if (time_name %in% covariates){
+      form_update <-update(form,    as.formula(paste0("~ . + indicator + indicator:shifted_time | 1")))
+    } else {
+      form_update <-update(form,    as.formula(paste0("~ . +", time_name," + indicator + indicator:shifted_time | 1")))
+    }
+  } else if (impact_model=="level"){
+    if (time_name %in% covariates){
+      form_update <-update(form,    as.formula(paste0("~ . + indicator | 1")))
+    } else {
+      form_update <-update(form,    as.formula(paste0("~ . +", time_name," + indicator | 1")))
+    }
+  } else if (impact_model=="slope"){
+    if (time_name %in% covariates){
+      form_update <-update(form,    as.formula(paste0("~ . + indicator:shifted_time| 1")))
+    } else {
+      form_update <-update(form,    as.formula(paste0("~ . +", time_name,"+ indicator:shifted_time | 1")))
+    }
+  }
+  if (!is.null(offset_name)){
+    offset_name <- sym(offset_name)
+    form_update <-update(form_update, as.formula(paste0("~ . + offset(log(",offset_name,"))")))
+  }
+  x <- gsub("[()]", "", form_update)
+  form_update <- as.formula(paste(x[2],x[1],x[3]))
+  # fit model
+  set.seed(1)
+  model <- zeroinfl(form_update,data,dist="poisson")
+  coeff <- model$coefficients["count"]
+  t_star <- which(data$indicator==1, arr.ind = TRUE)[1] #intervention_start_ind
+  b <- (n-t_star)/2
+
+  cov_mat <- vcov(model)
+  if (impact_model=="full"){
+    beta_intervention <- coeff$count["indicator"]
+    beta_interaction <- coeff$count["indicator:shifted_time"]
+    RR <- exp(beta_intervention+beta_interaction*b)
+    var_lin <- cov_mat["count_indicator","count_indicator"]+b^2*cov_mat["count_indicator:shifted_time","count_indicator:shifted_time"]+b*2*cov_mat["count_indicator","count_indicator:shifted_time"]
+    lin_est <- beta_intervention+b*beta_interaction
+  } else if (impact_model=="level"){
+    beta_intervention <- coeff$count["count_indicator"]
+    RR <- exp(beta_intervention)
+    var_lin <- cov_mat["count_indicator","count_indicator"]
+    lin_est <- beta_intervention
+  }
+  else if (impact_model=="slope"){
+    beta_interaction <- coeff$count["count_indicator:shifted_time"]
+    RR <- exp(beta_interaction*b)
+    var_lin <- b^2*cov_mat["count_indicator:shifted_time","count_indicator:shifted_time"]#+b*2*cov_mat["indicator","indicator:shifted_time"]
+    lin_est <- b*beta_interaction
+  }
+
+  CI_lin <- c(lin_est-1.96*sqrt(var_lin),lin_est+1.96*sqrt(var_lin))
+  CI_RR <- exp(CI_lin)
+  TS <- lin_est/sqrt(var_lin)
+  p_value <- round(2*pnorm(abs(TS),lower.tail = FALSE),2)
+  ret_vec <-c(RR,CI_RR,p_value)
+  names(ret_vec) <- c("RR", "2.5% CI", "97.5% CI","P-value")
+  s <- summary(model)
+  if (isTRUE(print_summary)){
+    print(s)
+  }
+  print(ret_vec)
+  s[["RR"]] <- ret_vec #or model[["RR"]] <- ret_vec and then return(model)
+
+  #add predictions
+  predA <- predict(model,type="response")
+  data$pred <- predA#*100/data[[offset_name]]
+  if (isTRUE(counterfactual)){
+    # Compute counterfactual values
+    new_data <- data
+    new_data$indicator <- 0
+    pred_counter <- predict(model,type="response",newdata = new_data)
+    data$predC <- pred_counter#*100/data[[offset_name]]
+    data$predC[data$indicator!=1] <- NA
+  }
+  data <- as_tibble(data)
+
+  return(list(model=model, model_summary=s, data=data))
+}
+
+
+#' ITS analysis for zero inflated count outcomes with seasonal adjustment
+#'
+#' \code{its_zero_inflated_fourier} fits a zero-inflated Poisson regression model to an ITS, and returns the model, the summary of the model (including the relative risk), and the original data together with the model predictions.
+#'
+#' @param data The data frame corresponding to the supplied formula, existing of at least 2 variables: (1) the count outcome, and (2) a vector of time points
+#' @param form A formula with the response on the left, followed by the ~ operator, and the covariates on the right, separated by + operators. The formula should not contain an offest term.
+#' @param offset_name either a string indicating the name of the offset column in the data, or NULL. Default value is NULL
+#' @param time_name A string giving the name of the time variable. The time variable may or may not be supplied as a covariate in the formula
+#' @param intervention_start_ind Numeric - a number between 1 and nrow(data)-1 stating the time point of the start of the intervention
+#' @param freq A positive integer describing the frequency of the time series.
+#' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
+#' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
+#' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
+#' @examples
+#' data <- zero_inflated_sim_data
+#' form <- as.formula("monthly_total ~ time")
+#' intervention_start_ind <- which(data$Year==2020 & data$Month==3)
+#' fit <- its_zero_inflated_fourier(data=data,form=form, time_name = "time",intervention_start_ind=intervention_start_ind, freq=12, impact_model = "full",counterfactual = TRUE)
+#' @importFrom tibble is_tibble as_tibble
+#' @importFrom rlang is_formula sym
+#' @importFrom stats as.formula glm lm pnorm poisson quasipoisson ts vcov update predict var na.omit quantile
+#' @importFrom pscl zeroinfl
+#' @importFrom MASS mvrnorm
+#' @importFrom forecast fourier
+#' @export
+its_zero_inflated_fourier <- function(data,form, offset_name=NULL,time_name, intervention_start_ind, freq, impact_model="full", counterfactual=FALSE, print_summary=FALSE){
+  pred <- predC <- indicator <- NULL
+  vars <- all.vars(form)
+  response <- vars[1]
+  covariates <- vars[-1]
+  if (!(is.data.frame(data) | is_tibble(data))){
+    stop("Please make sure that data is either a data frame or a tibble")
+  }
+  if(!(is_formula(form))){
+    stop("Please make sure that form is a formula object")
+  }
+  if (!(time_name %in% colnames(data))){
+    stop("Please make sure that time_name belongs to colnames(data)")
+  }
+  if(!all(data[[time_name]]==(1:nrow(data)))){
+    data[[time_name]]=1:nrow(data)
+    print("time_name column was overwritten with the values 1:nrow(data)")
+  }
+  if (!(is.null(offset_name))){
+    if (!(offset_name %in% colnames(data))){
+      stop("Please make sure that offset_name belongs to colnames(data)")
+    }
+    if (offset_name %in% covariates | paste0("offset(log(",offset_name,"))") %in% covariates | paste0("offset(",offset_name,")") %in% covariates | paste0("log(",offset_name,")") %in% covariates){
+      stop("The offset term should not be included in the formula. Please supply a formula without the offset, and add the name of the offset column using the argument offset_name.")
+    }
+  }
+  if (!(impact_model %in% c("full","level","slope"))){
+    stop("Please enter a valid impact_model name. Possible impact models are \"full\", \"level\", and \"slope\".")
+  }
+  if (!(response %in% colnames(data))){
+    stop("Please make sure that the response variable on the left hand side of the formula object belongs to colnames(data)")
+  }
+  if (!all(covariates %in% colnames(data))){
+    stop("Please make sure that the covariates on the right hand side of the formula object belong to colnames(data)")
+  }
+  n <- nrow(data)
+  if (!(intervention_start_ind>1 & intervention_start_ind<=n)){
+    stop("Please make sure that intervention_start_ind is a value greater than 1 and less or equal to nrow(data). intervention_start_ind is the index ")
+  }
+  data$indicator <- 0
+  data$indicator[intervention_start_ind:n] <- 1
+  data$shifted_time <- data[[time_name]]-intervention_start_ind
+
+  # update formula
+  if (!(freq>1 & freq<=n)){
+    stop("Please make sure that the freq is a value greater than 1 and less or equal to nrow(data)")
+  }
+  ts_outcome <- ts(data[[response]],frequency = freq)
+  fourier_mat <- fourier(ts_outcome,K=freq/2)
+  colnames(fourier_mat) <- gsub("-",".", colnames(fourier_mat))
+  fourier_df <- data.frame(fourier_mat)
+  colnames(fourier_df) <- colnames(fourier_mat)
+  data <- cbind(data,fourier_df)
+  form <-update(form, as.formula(paste0("~ . +", paste(colnames(fourier_mat), collapse= "+"))))
+  if (impact_model=="full"){
+    if (time_name %in% covariates){
+      form_update <-update(form,    as.formula(paste0("~ . + indicator + indicator:shifted_time | 1")))
+    } else {
+      form_update <-update(form,    as.formula(paste0("~ . +", time_name," + indicator + indicator:shifted_time | 1")))
+    }
+  } else if (impact_model=="level"){
+    if (time_name %in% covariates){
+      form_update <-update(form,    as.formula(paste0("~ . + indicator | 1")))
+    } else {
+      form_update <-update(form,    as.formula(paste0("~ . +", time_name," + indicator | 1")))
+    }
+  } else if (impact_model=="slope"){
+    if (time_name %in% covariates){
+      form_update <-update(form,    as.formula(paste0("~ . + indicator:shifted_time| 1")))
+    } else {
+      form_update <-update(form,    as.formula(paste0("~ . +", time_name,"+ indicator:shifted_time | 1")))
+    }
+  }
+  if (!is.null(offset_name)){
+    offset_name <- sym(offset_name)
+    form_update <-update(form_update, as.formula(paste0("~ . + offset(log(",offset_name,"))")))
+  }
+
+  t_star <- which(data$indicator==1, arr.ind = TRUE)[1]
+
+  x <- gsub("[()]", "", form_update)
+  form_update <- as.formula(paste(x[2],x[1],x[3]))
+  # fit model
+  set.seed(1)
+  model <- zeroinfl(form_update,data,dist="poisson")
+  coeff <- model$coefficients["count"]
+  t_star <- which(data$indicator==1, arr.ind = TRUE)[1] #intervention_start_ind
+  b <- (n-t_star)/2
+
+  cov_mat <- vcov(model)
+  if (impact_model=="full"){
+    beta_intervention <- coeff$count["indicator"]
+    beta_interaction <- coeff$count["indicator:shifted_time"]
+    RR <- exp(beta_intervention+beta_interaction*b)
+    var_lin <- cov_mat["count_indicator","count_indicator"]+b^2*cov_mat["count_indicator:shifted_time","count_indicator:shifted_time"]+b*2*cov_mat["count_indicator","count_indicator:shifted_time"]
+    lin_est <- beta_intervention+b*beta_interaction
+  } else if (impact_model=="level"){
+    beta_intervention <- coeff$count["count_indicator"]
+    RR <- exp(beta_intervention)
+    var_lin <- cov_mat["count_indicator","count_indicator"]
+    lin_est <- beta_intervention
+  }
+  else if (impact_model=="slope"){
+    beta_interaction <- coeff$count["count_indicator:shifted_time"]
+    RR <- exp(beta_interaction*b)
+    var_lin <- b^2*cov_mat["count_indicator:shifted_time","count_indicator:shifted_time"]#+b*2*cov_mat["indicator","indicator:shifted_time"]
+    lin_est <- b*beta_interaction
+  }
+
+  CI_lin <- c(lin_est-1.96*sqrt(var_lin),lin_est+1.96*sqrt(var_lin))
+  CI_RR <- exp(CI_lin)
+  TS <- lin_est/sqrt(var_lin)
+  p_value <- round(2*pnorm(abs(TS),lower.tail = FALSE),2)
+  ret_vec <-c(RR,CI_RR,p_value)
+  names(ret_vec) <- c("RR", "2.5% CI", "97.5% CI","P-value")
+  s <- summary(model)
+  if (isTRUE(print_summary)){
+    print(s)
+  }
+  print(ret_vec)
+  s[["RR"]] <- ret_vec #or model[["RR"]] <- ret_vec and then return(model)
+
+  #add predictions
+  predA <- predict(model,type="response")
+  data$pred <- predA#*100/data[[offset_name]]
+  if (isTRUE(counterfactual)){
+    # Compute counterfactual values
+    new_data <- data
+    new_data$indicator <- 0
+    pred_counter <- predict(model,type="response",newdata = new_data)
+    data$predC <- pred_counter#*100/data[[offset_name]]
+    data$predC[data$indicator!=1] <- NA
+  }
+  data <- as_tibble(data)
+
   return(list(model=model, model_summary=s, data=data))
 }
 
@@ -698,9 +1010,8 @@ its_lm_fourier <- function(data, form, time_name, intervention_start_ind,freq, k
   }
   t_star <- which(data$indicator==1, arr.ind = TRUE)[1]
   #estimate Fourier terms based only on pre-intervention data
-  ts_wo_intervention <- ts(data[[response]][1:(t_star-1)],frequency = freq)
-  fourier_mat <- fourier(ts_wo_intervention,K=freq/2)
-  fourier_mat <- rbind(fourier_mat,fourier_mat[(t_star%%freq):(n-t_star+t_star%%freq),])
+  ts_outcome <- ts(data[[response]],frequency = freq)
+  fourier_mat <- fourier(ts_outcome,K=freq/2)
   colnames(fourier_mat) <- gsub("-",".", colnames(fourier_mat))
   fourier_df <- data.frame(fourier_mat)
   colnames(fourier_df) <- colnames(fourier_mat)
@@ -948,6 +1259,44 @@ its_poisson <- function(data, form, offset_name=NULL,time_name, intervention_sta
   }
   return(out)
 }
+
+#' ITS analysis for count outcomes with excess zeros
+#'
+#' \code{its_zero_inflated_poisson} fits a zero-inflated Poisson regression model to an ITS, and returns the model, the summary of the model (including the relative risk), and the original data together with the model predictions.
+#'
+#' @param data The data frame corresponding to the supplied formula, existing of at least 2 variables: (1) the count outcome, and (2) a vector of time points
+#' @param form A formula with the response on the left, followed by the ~ operator, and the covariates on the right, separated by + operators. The formula should not contain an offest term.
+#' @param offset_name either a string indicating the name of the offset column in the data, or NULL. Default value is NULL
+#' @param time_name A string giving the name of the time variable. The time variable may or may not be supplied as a covariate in the formula
+#' @param intervention_start_ind Numeric - a number between 1 and nrow(data)-1 stating the time point of the start of the intervention
+#' @param freq A positive integer describing the frequency of the time series.
+#' @param seasonality Logical - indicating whether seasonal adjustment via Fourier terms should be used. Default value is FALSE, in which case seasonal adjustment is not considered.
+#' @param impact_model A string specifying the assumed impact model. Possible options include "full" corresponding to a model including both a level change and a slope change, "level" corresponding to a model including just a level change, and "slope" corresponding to a model including just a slope change. Default value is "full".
+#' @param counterfactual Logical - indicating whether the model-based counterfactual values should also be returned as an additional column in the data. Default value is FALSE, in which case the counterfactual values are not returned.
+#' @param print_summary Logical - indicating whethwe the entire model summary should be printed, or just the relevant effect size. Default value is FALSE in which case only the effect size, together with its 95\% CI and P-value, are printed.
+#' @return The function returns a list with three elements: the fitted Poisson regression model, the summary of the model (including the relative risk), and the original data together with the model predictions.
+#' @examples
+#' data <- zero_inflated_sim_data
+#' form <- as.formula("monthly_total ~ time")
+#' intervention_start_ind <- which(data$Year==2020 & data$Month==3)
+#' fit <- its_zero_inflated_poisson(data=data,form=form, time_name = "time",intervention_start_ind=intervention_start_ind, freq=12, seasonality=TRUE, impact_model = "full",counterfactual = TRUE)
+#' @importFrom tibble is_tibble as_tibble
+#' @importFrom rlang is_formula sym
+#' @importFrom stats as.formula glm lm pnorm poisson quasipoisson ts vcov update predict var na.omit quantile
+#' @importFrom forecast fourier
+#' @importFrom MASS mvrnorm
+#' @importFrom pscl zeroinfl
+#' @export
+its_zero_inflated_poisson <- function(data, form, offset_name=NULL,time_name, intervention_start_ind, freq, seasonality= FALSE,impact_model="full", counterfactual=FALSE,print_summary=FALSE){
+  pred <- predC <- indicator <- NULL
+  if (!isTRUE(seasonality)){
+    out <- its_zero_inflated(data, form, offset_name,time_name, intervention_start_ind, impact_model, counterfactual, print_summary)
+  } else {
+    out <- its_zero_inflated_fourier(data, form, offset_name,time_name, intervention_start_ind, freq,impact_model, counterfactual, print_summary)
+  }
+  return(out)
+}
+
 
 #' Plot ITS fitted values
 #'
